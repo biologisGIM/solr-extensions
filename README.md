@@ -1,10 +1,10 @@
 # solr-extensions
 Currently a set of extensions to the streaming expression functionality
 
-AddField and MergeValue Streaming Expressions Plugins
+FieldStreamOperations provides for the users two new functionalities 
+with field operations while using SolrCloud:
 
-These two custom developed plugins provides the additional functionality for user:
-
+Two new functions
     - 'AddField' creates new custom field with the value
     Example:
     addField(value=35.99, as=discount)
@@ -82,15 +82,15 @@ Building the project:
 
     In order to see the test reports, navigate to target/surefire-reports/ folder.
     There you'll see following documents:
-    - com.biologis.jars.AddFieldTest.txt (a very brief report)
-    - TEST-com.biologis.jars.AddFieldTest.xml
+    - com.biologis./.../.txt (a very brief report)
+    - TEST-com.biologis./.../.xml
     
 
 4. To create jar file which could be used for as a plugin for SolrCloud, run following command:
 
     mvn package
 
-    - in target folder you'll see the AddField-1.0-SNAPSHOT.jar file
+    - in target folder you'll see the StreamOperations-1.0-SNAPSHOT.jar file
 
 Streaming expression plugin implementation to SolrCloud:
 
@@ -148,7 +148,7 @@ Working in the SolrCloud Environment
 
 2. In your browser navigate to collection (choose 'techproducts') and then select 'Stream' section
 
-3. Since the AddField and MergeValue are Streaming Operations they should be wrapped by other Streaming Expressions lke 'select()'
+3. Since the AddField and MergeValue are Streaming Operations they should be wrapped by other Streaming Expressions like 'select()'
 Example:
 
 select(
