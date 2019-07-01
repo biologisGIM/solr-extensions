@@ -1,11 +1,12 @@
 language: java
 jdk:
-  - openjdk12
+- openjdk12
 before_deploy:
-  - mvn package
+- mvn package
 deploy:
   provider: releases
-  api_key: "GITHUB OAUTH TOKEN"
-  file: "target/solr-extensions-1.0-SNAPSHOT.jar"
+  file: target/solr-extensions-1.0-SNAPSHOT.jar
   on:
     tags: true
+  api-key:
+    secure: UmJWJPXpfryzug1lFNZkHZBBsjIfd8ghZkzfZSVPstrIXlbDw7k9fi4EtNxkwhxftDuxA4gFTu4KGg2DQRlAiNLlKH3tR0btMbgb6SF281o66feM+xeNGl4g9emN7D65HuBSaDWwR2PSkIEgZg4zHAsMfjKRAWfn16Zb9Z95YksHO44IGJgpm13RWduAC0mkt1ymq321ISXrMjZfw9fBkRc5J7GuVXGWfLetafm1vbkip0btilNt+iuIUJc75RrpwjlhbmrT+F7nqrMj/XweTyWNL3G0pm3R3N28GnMqKYVjSk3MAV29bBcnqXBymhTfCrjh1o2TDX93lMDBukb/QFkEpmDZMqvZotmsYDTBhaOXkRJbOknkiproWEf3NhtUqfdHoQ8JatGDi5uGkW2lF9PIWBdUVXhUEaTQIZKmWBQYm/PnZs2/3gfdfgMkia5nD2qIw9YjqnQoVtDg7APT9pFAojNQfcKVkLVncUnHFvvGYrT3uPr66FZNqnoDuk6pw+5U7CM/E/EUQ8S7SvRzV8Fh9LlY3OaGlEpnNBrJxHxlG+2T2FPWG+QXHutWsuT8URzYeKolYGDgu2pGafSjGIni7zMVgPPEyIIcv0msZZt3z1VxbujPbDLVnOj35HevdBl/g6XWbspolMAIrVk/GbNY8r8wSezlgqjLmJJngvQ=
