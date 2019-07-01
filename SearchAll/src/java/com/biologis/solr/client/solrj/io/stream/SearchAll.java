@@ -1,13 +1,5 @@
 package com.biologis.solr.client.solrj.io.stream;
 
-/**
- * return all rows from the collection.
- * <p>
- * Example:
- * searchAll(collectionName, q="*:*")
- * <p>
- */
-
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.io.SolrClientCache;

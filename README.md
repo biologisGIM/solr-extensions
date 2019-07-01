@@ -1,11 +1,21 @@
-Solr Extensions
+# solr-extensions
+Currently a set of extensions to the streaming expression functionality
 
-This custom developed plugin provides additional functionality for the user.
-Current plugin includes these functions:
+FieldStreamOperations provides for the users two new functionalities 
+with field operations while using SolrCloud:
 
-    'addField' a Streaming Operation, which creates new custom field with the value
-    'mergeValue' a Streaming Operation, which merge custom values to the values of the existing fields
-    'searchAll' a Streaming Expression, which returns all the rows from the collection
+Two new functions
+    - 'AddField' creates new custom field with the value
+    Example:
+    addField(value=35.99, as=discount)
+    Example's output:
+    "discount":"35.99"
+
+    - 'MergeValue' merge the custom values to the values of the existing fields
+    Example:
+    mergeValue(field=discount, delim=",", mergeValue=EUR)
+    Example's output:
+    "discount":"35.99,EUR"
 
 Prerequisites:
 
@@ -49,9 +59,9 @@ where {DIRECTORY} location of apache-maven folder
 
 Building the project:
 
-1. In a command line navigate to the folder 'Search'
+1. In a command line navigate to the folder 'AddField'(or 'MergeValue')
 - inside you'll see following:
-    - solr-extensions.iml
+    - AddField.iml (MergeValue.iml)
     - out         
     - pom.xml      
     - src          
@@ -72,19 +82,19 @@ Building the project:
 
     In order to see the test reports, navigate to target/surefire-reports/ folder.
     There you'll see following documents:
-    - com.biologis.solr.client.solrj.io.{CLASS_FILE}.txt (a very brief report)
-    - TEST-com.biologis.solr.client.solrj.io.{CLASS_FILE}.xml
+    - com.biologis./.../.txt (a very brief report)
+    - TEST-com.biologis./.../.xml
     
 
 4. To create jar file which could be used for as a plugin for SolrCloud, run following command:
 
     mvn package
 
-    - in target folder you'll see the solr-extensions-1.0-SNAPSHOT.jar file
+    - in target folder you'll see the StreamOperations-1.0-SNAPSHOT.jar file
 
 Streaming expression plugin implementation to SolrCloud:
 
-1. Navigate to solr's contrib directory:
+1. Navigate to solr's cintrib directory:
     /solr-{VERSION}/solr/contrib
 
 2. Create a folder named 'plugins' for your custom-made plugins
@@ -105,10 +115,9 @@ Streaming expression plugin implementation to SolrCloud:
     <lib dir="${solr.install.dir:../../../..}/contrib/plugins" regex=".*\.jar" />
         (this line will navigate solr to the location of the plugins)
 
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.ops.AddField"/>
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.ops.MergeValue"/>
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.stream.SearchAll"/>
-    (these two lines are makes our plugins available from the SolrCloud 'Stream section')
+    <expressible name="addField" class="com.biologis.jars.AddField"/>
+    <expressible name="mergeValue" class="com.biologis.jars.MergeValue"/>
+        (these two lines are makes our plugins available from the SolrCloud 'Stream section')
     
 8. Save the changes in solrconfig.xml file
 
@@ -139,33 +148,26 @@ Working in the SolrCloud Environment
 
 2. In your browser navigate to collection (choose 'techproducts') and then select 'Stream' section
 
-3. Try Streaming Expressions and Operations and feel free to wrap it with the other Streaming Expressions
+3. Since the AddField and MergeValue are Streaming Operations they should be wrapped by other Streaming Expressions like 'select()'
+Example:
 
-        searchAll(techproducts, q=*)
+select(
+    search(techproducts, q="cat:electronics", fl="id, manu, inStock, price, price_c", sort="id asc"),
+    id,
+    manu,
+    inStock,
+    price,
+    price_c,
+    addField(value=35.85, as=discount),
+    mergeValue(field=discount, delim=",", mergeValue="EUR")
+)
 
-        addField(value=35.85, as=discount)
-        
-        mergeValue(field=discount, delim=",", mergeValue="EUR")
+in the output you'll see newly generated field: {"discount": "35.85,EUR"}, which is basically a result of both
+(AddField and MergeValue) functions.
 
-        sort(
-        hashJoin(
-            searchAll(techproducts, q=*),
-            hashed=newSearchAll(techproducts, q=*),
-            on="_version_"),
-        by="_version_ asc, price asc"
-        )
-
-        select(
-            searchAll(techproducts, q="*:*", fl="id, manu, inStock, price, price_c", sort="id asc"),
-            id,
-            manu,
-            inStock,
-            price,
-            price_c,
-            addField(value=35.85, as=discount),
-            mergeValue(field=discount, delim=",", mergeValue="EUR")
-        )
-
+Last but not least. Make sure that the functions (in Streaming expression window) starts with the small letter:
+    addField(value=..., as=...),
+    mergeValue(field=..., delim="...", mergeValue=...)
 
 * in order to use JDK 8 please change the following lines in pom.xml file:
                 
