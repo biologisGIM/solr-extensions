@@ -6,6 +6,7 @@ before_deploy:
 deploy:
   provider: releases
   file: target/solr-extensions-1.0-SNAPSHOT.jar
+  skip_cleanup: true
   on:
     tags: true
   api-key:
