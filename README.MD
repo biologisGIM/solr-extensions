@@ -19,7 +19,7 @@ Prerequisites:
 The JDK can be downloaded from Oracle's Official Page:
 https://www.oracle.com/technetwork/java/javase/downloads/
 
-Maven (Java dependency manager)
+Maven (Java dependency  manager)
 - for this project being used Maven version 3.6.1
 
 The Maven can be downloaded from Apache Maven Project official Page:
