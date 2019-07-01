@@ -1,10 +1,10 @@
 package com.biologis.solr.client.solrj.io.ops;
 
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.solr.client.solrj.io.Tuple;
 import org.apache.solr.client.solrj.io.ops.StreamOperation;
 import org.apache.solr.client.solrj.io.stream.expr.StreamExpressionParser;
 import org.apache.solr.client.solrj.io.stream.expr.StreamFactory;
-import org.apache.commons.collections.map.HashedMap;
 import org.junit.Assert;
 import org.junit.Test;
 
