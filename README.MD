@@ -6,6 +6,7 @@ Current plugin includes these functions:
     'addField' a Streaming Operation, which creates new custom field with the value
     'mergeValue' a Streaming Operation, which merge custom values to the values of the existing fields
     'searchAll' a Streaming Expression, which returns all the rows from the collection
+    'nodesNoCycle' a Streaming Expression, which provides graph traversal functionality without Cycle detection
 
 Prerequisites:
 
@@ -18,6 +19,8 @@ Prerequisites:
 
 The JDK can be downloaded from Oracle's Official Page:
 https://www.oracle.com/technetwork/java/javase/downloads/
+
+OpenJDK Java should works too
 
 Maven (Java dependency manager)
 - for this project being used Maven version 3.6.1
@@ -105,9 +108,10 @@ Streaming expression plugin implementation to SolrCloud:
     <lib dir="${solr.install.dir:../../../..}/contrib/plugins" regex=".*\.jar" />
         (this line will navigate solr to the location of the plugins)
 
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.ops.AddField"/>
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.ops.MergeValue"/>
+    <expressible name="addField" class="com.biologis.solr.client.solrj.io.ops.AddField"/>
+    <expressible name="mergeValue" class="com.biologis.solr.client.solrj.io.ops.MergeValue"/>
     <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.stream.SearchAll"/>
+    <expressible name="nodesNoCycle" class="com.biologis.solr.client.solrj.io.graph.NodesNoCycle"/>
     (these two lines are makes our plugins available from the SolrCloud 'Stream section')
     
 8. Save the changes in solrconfig.xml file
@@ -146,6 +150,11 @@ Working in the SolrCloud Environment
         addField(value=35.85, as=discount)
         
         mergeValue(field=discount, delim=",", mergeValue="EUR")
+        
+        nodes(techproducts, 
+            walk="1, 5, 6, 7, 10->popularity",
+            trackTraversal="true",
+            gather="price")
 
         sort(
         hashJoin(
