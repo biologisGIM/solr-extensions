@@ -20,7 +20,7 @@ Prerequisites:
 The JDK can be downloaded from Oracle's Official Page:
 https://www.oracle.com/technetwork/java/javase/downloads/
 
-OpenJDK Java should works too
+`OpenJDK Java should works too`
 
 Maven (Java dependency manager)
 - for this project being used Maven version 3.6.1
@@ -40,13 +40,13 @@ Environment Setup:
 3. optional: to make Maven commands globally accessible (from command line),
 please add the following line to '/.bash_profile' file:
 
-    export PATH=$PATH:/{DIRECTORY}/apache-maven-3.6.1/bin
+    `export PATH=$PATH:/{DIRECTORY}/apache-maven-3.6.1/bin`
 
 where {DIRECTORY} location of apache-maven folder
 
 4. Save the '/.bash_profile' and source it running the command:
 
-    source ~/.bash_profile
+    `source ~/.bash_profile`
 
 5. Extract the downloaded Solr archive in a preferable location
 
@@ -81,58 +81,60 @@ Building the project:
 
 4. To create jar file which could be used for as a plugin for SolrCloud, run following command:
 
-    mvn package
+    `mvn package`
 
     - in target folder you'll see the solr-extensions-1.0-SNAPSHOT.jar file
 
 Streaming expression plugin implementation to SolrCloud:
 
 1. Navigate to solr's contrib directory:
-    /solr-{VERSION}/solr/contrib
+    `/solr-{VERSION}/solr/contrib`
 
 2. Create a folder named 'plugins' for your custom-made plugins
 
 3. Copy the generated jar file from your target directory to the plugins directory
 
 4. Navigate to 'configsets' directory:
-    /solr-{VERSION}/solr/server/solr/configsets
+    `/solr-{VERSION}/solr/server/solr/configsets`
 
 5. Copy and paste the existing 'sample_techproducts_configs' directory and rename it
 (for example techproducts_test)
 
 6. Navigate to the file solrconfig.xml
-    /solr-{VERSION}/.../.../techproducts_test/conf/solrconfig.xml
+    `/solr-{VERSION}/.../.../techproducts_test/conf/solrconfig.xml`
 
 7. Add following lines into solrconfig.xml file
 
-    <lib dir="${solr.install.dir:../../../..}/contrib/plugins" regex=".*\.jar" />
-        (this line will navigate solr to the location of the plugins)
+    `<lib dir="${solr.install.dir:../../../..}/contrib/plugins" regex=".*\.jar" />`
 
-    <expressible name="addField" class="com.biologis.solr.client.solrj.io.ops.AddField"/>
-    <expressible name="mergeValue" class="com.biologis.solr.client.solrj.io.ops.MergeValue"/>
-    <expressible name="searchAll" class="com.biologis.solr.client.solrj.io.stream.SearchAll"/>
-    <expressible name="nodesNoCycle" class="com.biologis.solr.client.solrj.io.graph.NodesNoCycle"/>
+    (this line will navigate solr to the location of the plugins)
+
+    `<expressible name="addField" class="com.biologis.solr.client.solrj.io.ops.AddField"/>`
+    `<expressible name="mergeValue" class="com.biologis.solr.client.solrj.io.ops.MergeValue"/>`
+    `<expressible name="searchAll" class="com.biologis.solr.client.solrj.io.stream.SearchAll"/>`
+    `<expressible name="nodesNoCycle" class="com.biologis.solr.client.solrj.io.graph.NodesNoCycle"/>`
+   
     (these two lines are makes our plugins available from the SolrCloud 'Stream section')
     
-8. Save the changes in solrconfig.xml file
+8. Save the changes in `solrconfig.xml` file
 
 Running the SolrCloud and performing the new Streaming Expressions
 
 1. (In a command line) navigate to the Solr directory:
-    /solr-{VERSION}/solr/
+    `/solr-{VERSION}/solr/`
 
 2. In order to create a new 'techproducts_test' collection run the following command:
 
     bin/solr create -c techproducts -s 2 -rf 2 -d server/solr/configsets/techproducts_test/conf -n techproducts_test
 
-    bin/solr start -c -p 8983 -s example/cloud/node1/solr
-    bin/solr start -c -p 7574 -s example/cloud/node2/solr -z localhost:9983
+    `bin/solr start -c -p 8983 -s example/cloud/node1/solr`
+    `bin/solr start -c -p 7574 -s example/cloud/node2/solr -z localhost:9983`
 
     (ports 8983, 7574 & 9983 are given by default; but you can also customize the by assigning your own)
 
 3. Indexing the data. In the command line run the following command:
 
-    bin/post -c techproducts example/exampledocs/*
+    `bin/post -c techproducts example/exampledocs/*`
     (this will take all the data from exampledocs directory and index them)
 
 Working in the SolrCloud Environment
