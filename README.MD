@@ -62,16 +62,16 @@ Building the project:
 
 2. To build the project run following command:
     
-    mvn compile
+    `mvn compile`
 
     - alternatively you can use:
 
-    mvn install
+    `mvn install`
     (this command install all dependencies, compile and test the project)
 
 3. To test the project run following command:
 
-    mvn test
+    `mvn test`
 
     In order to see the test reports, navigate to target/surefire-reports/ folder.
     There you'll see following documents:
@@ -125,7 +125,7 @@ Running the SolrCloud and performing the new Streaming Expressions
 
 2. In order to create a new 'techproducts_test' collection run the following command:
 
-    bin/solr create -c techproducts -s 2 -rf 2 -d server/solr/configsets/techproducts_test/conf -n techproducts_test
+    `bin/solr create -c techproducts -s 2 -rf 2 -d server/solr/configsets/techproducts_test/conf -n techproducts_test`
 
     `bin/solr start -c -p 8983 -s example/cloud/node1/solr`
     `bin/solr start -c -p 7574 -s example/cloud/node2/solr -z localhost:9983`
