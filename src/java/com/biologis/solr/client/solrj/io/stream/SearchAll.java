@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 
-public class SearchAll extends TupleStream implements Expressible  {
+public class SearchAll extends TupleStream implements Expressible {
 
     private static final long serialVersionUID = 1;
 
@@ -57,7 +57,7 @@ public class SearchAll extends TupleStream implements Expressible  {
         this.params = params;
     }
 
-    public SearchAll(StreamExpression expression, StreamFactory factory) throws IOException{
+    public SearchAll(StreamExpression expression, StreamFactory factory) throws IOException {
         // grab all parameters out
         String collectionName = factory.getValueOperand(expression, 0);
         List<StreamExpressionNamedParameter> namedParams = factory.getNamedOperands(expression);
@@ -65,50 +65,49 @@ public class SearchAll extends TupleStream implements Expressible  {
 
 
         // Collection Name
-        if(null == collectionName){
-            throw new IOException(String.format(Locale.ROOT,"invalid expression %s - collectionName expected as first operand",expression));
+        if (null == collectionName) {
+            throw new IOException(String.format(Locale.ROOT, "invalid expression %s - collectionName expected as first operand", expression));
         }
 
         // Named parameters - passed directly to solr as solrparams
-        if(0 == namedParams.size()){
-            throw new IOException(String.format(Locale.ROOT,"invalid expression %s - at least one named parameter expected. eg. 'q=*:*'",expression));
+        if (0 == namedParams.size()) {
+            throw new IOException(String.format(Locale.ROOT, "invalid expression %s - at least one named parameter expected. eg. 'q=*:*'", expression));
         }
 
         // pull out known named params
         ModifiableSolrParams params = new ModifiableSolrParams();
-        for(StreamExpressionNamedParameter namedParam : namedParams){
-            if(!namedParam.getName().equals("zkHost") && !namedParam.getName().equals("buckets") && !namedParam.getName().equals("bucketSorts") && !namedParam.getName().equals("limit")){
+        for (StreamExpressionNamedParameter namedParam : namedParams) {
+            if (!namedParam.getName().equals("zkHost") && !namedParam.getName().equals("buckets") && !namedParam.getName().equals("bucketSorts") && !namedParam.getName().equals("limit")) {
                 params.add(namedParam.getName(), namedParam.getParameter().toString().trim());
             }
         }
 
         // zkHost, optional - if not provided then will look into factory list to get
         String zkHost = null;
-        if(null == zkHostExpression){
+        if (null == zkHostExpression) {
             zkHost = factory.getCollectionZkHost(collectionName);
-            if(zkHost == null) {
+            if (zkHost == null) {
                 zkHost = factory.getDefaultZkHost();
             }
+        } else if (zkHostExpression.getParameter() instanceof StreamExpressionValue) {
+            zkHost = ((StreamExpressionValue) zkHostExpression.getParameter()).getValue();
         }
-        else if(zkHostExpression.getParameter() instanceof StreamExpressionValue){
-            zkHost = ((StreamExpressionValue)zkHostExpression.getParameter()).getValue();
-        }
-        if(null == zkHost){
-            throw new IOException(String.format(Locale.ROOT,"invalid expression %s - zkHost not found for collection '%s'",expression,collectionName));
+        if (null == zkHost) {
+            throw new IOException(String.format(Locale.ROOT, "invalid expression %s - zkHost not found for collection '%s'", expression, collectionName));
         }
 
         // We've got all the required items
         init(zkHost, collectionName, params);
 
-        if(this.params.get(CommonParams.Q) == null) {
+        if (this.params.get(CommonParams.Q) == null) {
             this.params.add(CommonParams.Q, "*:*");
         }
 
-        if(this.params.get(CommonParams.ROWS) == null) {
+        if (this.params.get(CommonParams.ROWS) == null) {
             this.params.add(CommonParams.ROWS, numRows);
         }
 
-        if(params.get(CommonParams.SORT) != null) {
+        if (params.get(CommonParams.SORT) != null) {
             this.comp = parseComp(params.get(CommonParams.SORT), params.get(CommonParams.FL));
         }
 
@@ -122,8 +121,8 @@ public class SearchAll extends TupleStream implements Expressible  {
         StreamExpression expression = new StreamExpression(factory.getFunctionName((this.getClass())));
 
         // collection
-        if(collection.indexOf(',') > -1) {
-            expression.addParameter("\""+collection+"\"");
+        if (collection.indexOf(',') > -1) {
+            expression.addParameter("\"" + collection + "\"");
         } else {
             expression.addParameter(collection);
         }
@@ -167,12 +166,12 @@ public class SearchAll extends TupleStream implements Expressible  {
     }
 
     public List<TupleStream> children() {
-        List<TupleStream> l =  new ArrayList();
+        List<TupleStream> l = new ArrayList();
         return l;
     }
 
     public void open() throws IOException {
-        if(cache != null) {
+        if (cache != null) {
             cloudSolrClient = cache.getCloudSolrClient(zkHost);
         } else {
             final List<String> hosts = new ArrayList<>();
@@ -181,7 +180,7 @@ public class SearchAll extends TupleStream implements Expressible  {
         }
 
 
-        QueryRequest request = new QueryRequest(params,  SolrRequest.METHOD.POST);
+        QueryRequest request = new QueryRequest(params, SolrRequest.METHOD.POST);
         try {
             QueryResponse response = request.process(cloudSolrClient, collection);
             SolrDocumentList docs = response.getResults();
@@ -201,16 +200,16 @@ public class SearchAll extends TupleStream implements Expressible  {
     }
 
     public void close() throws IOException {
-        if(cache == null) {
+        if (cache == null) {
             cloudSolrClient.close();
         }
     }
 
     public Tuple read() throws IOException {
-        if(documentIterator.hasNext()) {
+        if (documentIterator.hasNext()) {
             Map map = new HashMap();
             SolrDocument doc = documentIterator.next();
-            for(String key  : doc.keySet()) {
+            for (String key : doc.keySet()) {
                 map.put(key, doc.get(key));
             }
             return new Tuple(map);
@@ -236,7 +235,7 @@ public class SearchAll extends TupleStream implements Expressible  {
 
         HashSet fieldSet = null;
 
-        if(fl != null) {
+        if (fl != null) {
             fieldSet = new HashSet();
             String[] fls = fl.split(",");
             for (String f : fls) {
@@ -246,7 +245,7 @@ public class SearchAll extends TupleStream implements Expressible  {
 
         String[] sorts = sort.split(",");
         StreamComparator[] comps = new StreamComparator[sorts.length];
-        for(int i=0; i<sorts.length; i++) {
+        for (int i = 0; i < sorts.length; i++) {
             String s = sorts[i];
 
             String[] spec = s.trim().split("\\s+");
@@ -258,14 +257,14 @@ public class SearchAll extends TupleStream implements Expressible  {
             String fieldName = spec[0].trim();
             String order = spec[1].trim();
 
-            if(fieldSet != null && !fieldSet.contains(spec[0])) {
-                throw new IOException("Fields in the sort spec must be included in the field list:"+spec[0]);
+            if (fieldSet != null && !fieldSet.contains(spec[0])) {
+                throw new IOException("Fields in the sort spec must be included in the field list:" + spec[0]);
             }
 
             comps[i] = new FieldComparator(fieldName, order.equalsIgnoreCase("asc") ? ComparatorOrder.ASCENDING : ComparatorOrder.DESCENDING);
         }
 
-        if(comps.length > 1) {
+        if (comps.length > 1) {
             return new MultipleFieldComparator(comps);
         } else {
             return comps[0];
