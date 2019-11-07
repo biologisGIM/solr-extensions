@@ -63,14 +63,13 @@ public class SearchAll extends TupleStream implements Expressible {
         List<StreamExpressionNamedParameter> namedParams = factory.getNamedOperands(expression);
         StreamExpressionNamedParameter zkHostExpression = factory.getNamedOperand(expression, "zkHost");
 
-
         // Collection Name
-        if (null == collectionName) {
+        if (collectionName == null) {
             throw new IOException(String.format(Locale.ROOT, "invalid expression %s - collectionName expected as first operand", expression));
         }
 
         // Named parameters - passed directly to solr as solrparams
-        if (0 == namedParams.size()) {
+        if (namedParams.size() == 0) {
             throw new IOException(String.format(Locale.ROOT, "invalid expression %s - at least one named parameter expected. eg. 'q=*:*'", expression));
         }
 
@@ -84,7 +83,7 @@ public class SearchAll extends TupleStream implements Expressible {
 
         // zkHost, optional - if not provided then will look into factory list to get
         String zkHost = null;
-        if (null == zkHostExpression) {
+        if (zkHostExpression == null) {
             zkHost = factory.getCollectionZkHost(collectionName);
             if (zkHost == null) {
                 zkHost = factory.getDefaultZkHost();
@@ -92,7 +91,7 @@ public class SearchAll extends TupleStream implements Expressible {
         } else if (zkHostExpression.getParameter() instanceof StreamExpressionValue) {
             zkHost = ((StreamExpressionValue) zkHostExpression.getParameter()).getValue();
         }
-        if (null == zkHost) {
+        if (zkHost == null) {
             throw new IOException(String.format(Locale.ROOT, "invalid expression %s - zkHost not found for collection '%s'", expression, collectionName));
         }
 
@@ -178,7 +177,6 @@ public class SearchAll extends TupleStream implements Expressible {
             hosts.add(zkHost);
             cloudSolrClient = new CloudSolrClient.Builder(hosts, Optional.empty()).build();
         }
-
 
         QueryRequest request = new QueryRequest(params, SolrRequest.METHOD.POST);
         try {

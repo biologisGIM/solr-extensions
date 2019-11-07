@@ -39,7 +39,7 @@ public class MergeValue implements StreamOperation {
 
     public MergeValue(StreamExpression expression, StreamFactory factory) throws IOException {
 
-        if(3 == expression.getParameters().size()) {
+        if (expression.getParameters().size() == 3) {
             StreamExpressionNamedParameter fieldParam = factory.getNamedOperand(expression, "field");
             this.field = ((StreamExpressionValue) fieldParam.getParameter()).getValue();
 
@@ -58,6 +58,7 @@ public class MergeValue implements StreamOperation {
     public void operate(Tuple tuple) {
         StringBuilder sb = new StringBuilder();
         Object val = tuple.get(field);
+
         sb.append(val);
         sb.append(delim);
         sb.append(mergeValue);
@@ -73,6 +74,7 @@ public class MergeValue implements StreamOperation {
         expression.addParameter(new StreamExpressionNamedParameter("filed", sb.toString()));
         expression.addParameter(new StreamExpressionNamedParameter("mergeValue", mergeValue));
         expression.addParameter(new StreamExpressionNamedParameter("delim", delim));
+
         return expression;
     }
 

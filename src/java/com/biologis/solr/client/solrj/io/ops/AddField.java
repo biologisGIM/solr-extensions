@@ -34,7 +34,7 @@ public class AddField implements StreamOperation {
 
     public AddField(StreamExpression expression, StreamFactory factory) throws IOException {
 
-        if (2 == expression.getParameters().size()) {
+        if (expression.getParameters().size() == 2) {
             StreamExpressionNamedParameter asParam = factory.getNamedOperand(expression, "as");
             this.as = ((StreamExpressionValue) asParam.getParameter()).getValue();
 
@@ -49,7 +49,11 @@ public class AddField implements StreamOperation {
     @Override
     public void operate(Tuple tuple) {
         StringBuilder buf = new StringBuilder();
-        if(null == value){value = "null";}
+
+        if (value == null) {
+            value = "null";
+        }
+
         buf.append(value);
         tuple.put(as, buf.toString());
     }
@@ -60,6 +64,7 @@ public class AddField implements StreamOperation {
 
         expression.addParameter(new StreamExpressionNamedParameter("value", value));
         expression.addParameter(new StreamExpressionNamedParameter("as", as));
+
         return expression;
     }
 
