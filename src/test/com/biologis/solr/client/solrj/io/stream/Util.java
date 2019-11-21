@@ -6,52 +6,58 @@ import org.apache.solr.client.solrj.io.stream.StreamContext;
 import org.apache.solr.client.solrj.io.stream.TupleStream;
 import org.apache.solr.common.params.ModifiableSolrParams;
 
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Tempo {
+public class Util {
 
     private static String url = "http://localhost:8983/solr/kmm";
 
 
-    public List<Tuple> getTuples(String streamingExp){
-        ModifiableSolrParams oldParams = new ModifiableSolrParams();
-        oldParams.set("expr", oldQueryString);
-        oldParams.set("qt", "/stream");
+    public List<Tuple> getTuples(String streamingExp) throws IOException {
+        ModifiableSolrParams params = new ModifiableSolrParams();
+        params.set("expr", streamingExp);
+        params.set("qt", "/stream");
 
-        TupleStream oldTupleStream = new SolrStream(url, oldParams);
+        TupleStream tupleStream = new SolrStream(this.url, params);
         StreamContext context = new StreamContext();
-        oldTupleStream.setStreamContext(context);
+        tupleStream.setStreamContext(context);
 
-        // New streaming expression
-        ModifiableSolrParams newParams = new ModifiableSolrParams();
-        newParams.set("expr", newQueryString);
-        newParams.set("qt", "/stream");
-
-        TupleStream newTupleStream = new SolrStream(url, newParams);
-        StreamContext context2 = new StreamContext();
-        oldTupleStream.setStreamContext(context2);
+        // TODO sort the stream!
 
         //Parse TupleStream to List
-        List<Tuple> oldTupleList = new LinkedList<Tuple>();
-        List<Tuple> newTupleList = new LinkedList<Tuple>();
+        List<Tuple> tupleList = new LinkedList<Tuple>();
 
-        try{
-            oldTupleStream.open();
+        tupleStream.open();
 
-            Tuple t;
-            while ( !(t = oldTupleStream.read()).EOF ){
-                oldTupleList.add(t);
-            }
-
-            oldTupleStream.close();
-
-            newTupleStream.open();
-
-            while ( !(t = newTupleStream.read()).EOF ){
-                newTupleList.add(t);
-            }
+        Tuple t;
+        while ( !(t = tupleStream.read()).EOF ){
+            tupleList.add(t);
         }
 
+        tupleStream.close();
+
+        return tupleList;
     }
+
+    public boolean areTuplesEqual(Tuple one, Tuple two){
+        if (one.fields.keySet().equals(two.fields.keySet())) {
+            String key;
+            Iterator it = one.fields.keySet().iterator();
+
+            while (it.hasNext()){
+                key = (String)it.next();
+                if (!one.get(key).equals(two.get(key))){
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
 }

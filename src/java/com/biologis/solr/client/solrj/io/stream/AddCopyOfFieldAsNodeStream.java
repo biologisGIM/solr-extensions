@@ -11,8 +11,6 @@ import org.apache.solr.client.solrj.io.stream.expr.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressible {
 
@@ -36,11 +34,6 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
         this.stream = stream;
         this.concat = new ConcatOperation(new String[]{fieldName}, "node", ",");
         this.options = this.getSelectParameters();
-        StringBuilder sb = new StringBuilder();
-        sb.append("concat(fields=");
-        sb.append(fieldName);
-        sb.append(",delim=',',as=node)");
-        this.options.add(sb.toString());
 
         SelectStream resultStream = new SelectStream(this.stream, this.options);
         this.resultStream = resultStream;
