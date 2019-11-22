@@ -14,16 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class SortHavingStream extends TupleStream implements Expressible {
+/*
+ StreamingExpression equivalent to:
 
-    private static final long serialVersionUID = 1;
+sort(
+        $this->having(
+        $stream,
+        'and(eq(' . $this->_field(conj) . ', val(and)),eq(' . $this->_field(direkt) . ', val(fwd)))'
+        ),
+        'by="' . $this->_field('lbuuid') . ' asc,' . $this->_field('nl') . ' asc"'
+        )
+*/
+
+public class SortHavingStream extends TupleStream implements Expressible {
 
     private TupleStream stream;
     private RecursiveBooleanEvaluator evaluator;
     private StreamComparator comparator;
     private StreamContext streamContext;
-
-    private transient Tuple currentGroupHead;
 
     public SortHavingStream(TupleStream stream, RecursiveBooleanEvaluator evaluator, StreamComparator comp)
             throws IOException {
@@ -32,14 +40,12 @@ public class SortHavingStream extends TupleStream implements Expressible {
 
     public SortHavingStream(StreamExpression expression, StreamFactory factory) throws IOException {
 
-        // take all the parameters
         List<StreamExpression> streamExpressions = factory.getExpressionOperandsRepresentingTypes(
                 expression, Expressible.class, TupleStream.class);
         List<StreamExpression> evaluatorExpressions = factory.getExpressionOperandsRepresentingTypes(
                 expression, Expressible.class, TupleStream.class);
         StreamExpressionNamedParameter byExpression = factory.getNamedOperand(expression, "by");
 
-        // streaming expression content validation
         if (expression.getParameters().size() != streamExpressions.size() + 1) {
             throw new IOException(
                     String.format(Locale.ROOT, "Invalid expression %s - unknown operands found", expression));
@@ -109,7 +115,7 @@ public class SortHavingStream extends TupleStream implements Expressible {
 
         // comparator (sort by)
         if (comparator instanceof Expressible) {
-            expression.addParameter(new StreamExpressionNamedParameter("by", ((Expressible) comparator).toExpression(factory)));
+            expression.addParameter(new StreamExpressionNamedParameter("by", ((Expressible)comparator).toExpression(factory)));
         } else {
             throw new IOException("This SortHavingStream contains a non-expressible equalitor - it cannot be converted to an expression");
         }
@@ -133,6 +139,7 @@ public class SortHavingStream extends TupleStream implements Expressible {
     }
 
     public void setStreamContext(StreamContext context) {
+        this.streamContext = context;
         this.stream.setStreamContext(context);
         this.evaluator.setStreamContext(context);
     }
@@ -155,6 +162,11 @@ public class SortHavingStream extends TupleStream implements Expressible {
         while (true) {
             Tuple tuple = stream.read();
             if (tuple.EOF) {
+                return tuple;
+            }
+
+            streamContext.getTupleContext().clear();
+            if ((boolean)evaluator.evaluate(tuple)) {
                 return tuple;
             }
         }
