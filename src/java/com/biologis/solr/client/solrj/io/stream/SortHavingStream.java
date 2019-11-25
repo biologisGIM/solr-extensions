@@ -75,7 +75,7 @@ public class SortHavingStream extends TupleStream implements Expressible {
 
         init(factory.constructStream(streamExpressions.get(0)),
                 (RecursiveBooleanEvaluator) evaluator,
-                factory.constructComparator(((StreamExpressionValue) byExpression.getParameter()).getValue(), FieldComparator.class));
+                factory.constructComparator(((StreamExpressionValue)byExpression.getParameter()).getValue(), FieldComparator.class));
     }
 
     private void init(TupleStream stream, RecursiveBooleanEvaluator evaluator, StreamComparator comp) throws IOException {
@@ -83,7 +83,6 @@ public class SortHavingStream extends TupleStream implements Expressible {
         this.evaluator = evaluator;
         this.comparator = comp;
     }
-    //TODO: Have a look at SortStream (lines 83 - 108) - regarding worker class perhaps we'll need this
 
     @Override
     public StreamExpression toExpression(StreamFactory factory) throws IOException {
@@ -98,7 +97,7 @@ public class SortHavingStream extends TupleStream implements Expressible {
         // stream
         if (includeStreams) {
             if (stream instanceof Expressible) {
-                expression.addParameter(((Expressible) stream).toExpression(factory));
+                expression.addParameter(((Expressible)stream).toExpression(factory));
             } else {
                 throw new IOException("This SortHavingStream contains a non-expressible TupleStream - it cannot be converted to an expression");
             }
@@ -114,11 +113,12 @@ public class SortHavingStream extends TupleStream implements Expressible {
         }
 
         // comparator (sort by)
-        if (comparator instanceof Expressible) {
-            expression.addParameter(new StreamExpressionNamedParameter("by", ((Expressible)comparator).toExpression(factory)));
-        } else {
-            throw new IOException("This SortHavingStream contains a non-expressible equalitor - it cannot be converted to an expression");
-        }
+//        if (comparator instanceof Expressible) {
+//            expression.addParameter(new StreamExpressionNamedParameter("by", ((Expressible)comparator).toExpression(factory)));
+//        } else {
+//            throw new IOException("This SortHavingStream contains a non-expressible equalitor - it cannot be converted to an expression");
+//        }
+        expression.addParameter(new StreamExpressionNamedParameter("by", comparator.toExpression(factory)));
 
         return expression;
     }
@@ -172,9 +172,9 @@ public class SortHavingStream extends TupleStream implements Expressible {
         }
     }
 
-    /** Return the stream sort - ie, hte order in which records are returned */
     public StreamComparator getStreamSort() {
-        return stream.getStreamSort();
+//        return stream.getStreamSort();
+        return comparator;
     }
 
     public int getCost() {
