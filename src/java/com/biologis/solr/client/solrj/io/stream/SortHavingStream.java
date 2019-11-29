@@ -10,6 +10,8 @@ import org.apache.solr.client.solrj.io.comp.FieldComparator;
 import org.apache.solr.client.solrj.io.comp.StreamComparator;
 import org.apache.solr.client.solrj.io.eval.RecursiveBooleanEvaluator;
 import org.apache.solr.client.solrj.io.eval.StreamEvaluator;
+import org.apache.solr.client.solrj.io.stream.HavingStream;
+import org.apache.solr.client.solrj.io.stream.SortStream;
 import org.apache.solr.client.solrj.io.stream.StreamContext;
 import org.apache.solr.client.solrj.io.stream.TupleStream;
 import org.apache.solr.client.solrj.io.stream.expr.*;
@@ -27,140 +29,105 @@ sort(
         )
 */
 
- public class SortHavingStream extends TupleStream implements Expressible {
+public class SortHavingStream extends TupleStream implements Expressible {
 
-     private TupleStream stream;
-     private RecursiveBooleanEvaluator evaluator;
-     private StreamComparator comp;       // variable 'comparator' get replaced with 'comp'
-     private StreamContext streamContext;
+    private static final long serialVersionUID = 1;
 
-     public SortHavingStream(TupleStream stream, RecursiveBooleanEvaluator evaluator, StreamComparator comp) throws IOException {
-         init(stream, evaluator, comp);
-     }
+    private TupleStream stream;
+    private HavingStream havingStream;
+    private StreamComparator comp;
+    private SortStream sortStream;
+    private RecursiveBooleanEvaluator eval;
 
-     public SortHavingStream(StreamExpression expression, StreamFactory factory) throws IOException {
-        // grab all parameters
-         List<StreamExpression> streamExpressions = factory.getExpressionOperandsRepresentingTypes(expression, Expressible.class, TupleStream.class);
-         List<StreamExpression> evaluatorExpressions = factory.getExpressionOperandsRepresentingTypes(expression, RecursiveBooleanEvaluator.class);
-         StreamExpressionNamedParameter byExpression = factory.getNamedOperand(expression, "by");
+    public SortHavingStream(TupleStream stream, RecursiveBooleanEvaluator eval, StreamComparator comp) throws IOException {
+        this.init(stream, eval, comp);
+    }
 
-         // validate expression contains only what we want
-         if (expression.getParameters().size() != streamExpressions.size() + 1) {
-             throw new IOException(String.format(Locale.ROOT,"Invalid expression %s - unknown operands found", expression));
-         }
+    public SortHavingStream(StreamExpression expression, StreamFactory factory) throws IOException {
+        List<StreamExpression> streamExpressions = factory.getExpressionOperandsRepresentingTypes(expression, Expressible.class, TupleStream.class);
+        List<StreamExpression> evaluatorExpressions = factory.getExpressionOperandsRepresentingTypes(expression, RecursiveBooleanEvaluator.class);
+        StreamExpressionNamedParameter byExpression = factory.getNamedOperand(expression, "by");
 
-         if (streamExpressions.size() != 1) {
-             throw new IOException(String.format(Locale.ROOT,"Invalid expression %s - expecting a single stream but found %d",expression, streamExpressions.size()));
-         }
+        if (expression.getParameters().size() != streamExpressions.size() + 1) {
+            throw new IOException(String.format(Locale.ROOT, "Invalid expression %s - unknown operands found", expression));
+        }
 
-         if (byExpression == null || !(byExpression.getParameter() instanceof StreamExpressionValue)) {
-             throw new IOException(String.format(Locale.ROOT,"Invalid expression %s - expecting single 'by' parameter listing fields to sort over but didn't find one",expression));
-         }
+        if (streamExpressions.size() != 1) {
+            throw new IOException(String.format(Locale.ROOT, "Invalid expression %s - expecting a single stream but found %d", expression, streamExpressions.size()));
+        }
 
-         StreamEvaluator evaluator = null;
-         if(evaluatorExpressions != null && evaluatorExpressions.size() == 1) {
-             StreamExpression ex = evaluatorExpressions.get(0);
-             evaluator = factory.constructEvaluator(ex);
-             if(!(evaluator instanceof RecursiveBooleanEvaluator)) {
-                 throw new IOException("The HavingStream requires a RecursiveBooleanEvaluator. A StreamEvaluator was provided.");
-             }
-         } else {
-             throw new IOException("The HavingStream requires a RecursiveBooleanEvaluator.");
-         }
+        if (byExpression == null || !(byExpression.getParameter() instanceof StreamExpressionValue)) {
+            throw new IOException(String.format(Locale.ROOT, "Invalid expression %s - expecting single 'by' parameter listing fields to sort over but didn't find one", expression));
+        }
 
-         init(
-                 factory.constructStream(streamExpressions.get(0)),
-                 (RecursiveBooleanEvaluator) evaluator,
-                 factory.constructComparator(((StreamExpressionValue) byExpression.getParameter()).getValue(), FieldComparator.class));
-     }
+        StreamEvaluator eval = null;
+        if(evaluatorExpressions != null && evaluatorExpressions.size() == 1) {
+            StreamExpression ex = evaluatorExpressions.get(0);
+            eval = factory.constructEvaluator(ex);
+            if(!(eval instanceof RecursiveBooleanEvaluator)) {
+                throw new IOException("The SortHavingStream requires a RecursiveBooleanEvaluator. A StreamEvaluator was provided.");
+            }
+        } else {
+            throw new IOException("The SortHavingStream requires a RecursiveBooleanEvaluator.");
+        }
 
-     private void init(TupleStream stream, RecursiveBooleanEvaluator evaluator, StreamComparator comp) throws IOException {
-         this.stream = stream;
-         this.evaluator = evaluator;
-         this.comp = comp;
-     }
+        init(
+                factory.constructStream(streamExpressions.get(0)),
+                (RecursiveBooleanEvaluator)eval,
+                factory.constructComparator(((StreamExpressionValue)byExpression.getParameter()).getValue(), FieldComparator.class));
+    }
 
-     @Override
-     public StreamExpression toExpression(StreamFactory factory) throws IOException {
-         return toExpression(factory, true);
-     }
+    private void init(TupleStream stream, RecursiveBooleanEvaluator eval, StreamComparator comp) throws IOException {
+        this.stream = stream;
+        this.eval = eval;
+        this.comp = comp;
+    }
 
-     private StreamExpression toExpression(StreamFactory factory, boolean includeStreams) throws IOException {
-         // function name
-         StreamExpression expression = new StreamExpression(factory.getFunctionName(this.getClass()));
+    @Override
+    public void setStreamContext(StreamContext context) {
+        this.stream.setStreamContext(context);
+        this.eval.setStreamContext(context);
+    }
 
-         // stream
-         if (includeStreams) {
-             expression.addParameter(((Expressible) stream).toExpression(factory));
-         } else {
-             expression.addParameter("<stream>");
-         }
+    @Override
+    public List<TupleStream> children() {
+        return this.havingStream.children();
+    }
 
-         // evaluator
-         if (evaluator instanceof Expressible) {
-             expression.addParameter(evaluator.toExpression(factory));
-         } else {
-             throw new IOException("This SortHavingStream contains a non-expressible evaluator - it cannot be converted to an expression");
-         }
+    @Override
+    public void open() throws IOException {
+        // evaluate the stream
+        this.havingStream = new HavingStream(this.stream, this.eval);
+        this.havingStream.open();
 
-         // comparator (sort by)
-         expression.addParameter(new StreamExpressionNamedParameter("by", comp.toExpression(factory)));
+        // sort the stream
+        this.sortStream = new SortStream(this.havingStream, this.comp);
+        this.sortStream.open();
+    }
 
-         return expression;
-     }
+    @Override
+    public void close() throws IOException {
+        this.havingStream.close();
+        this.sortStream.close();
+    }
 
-     @Override
-     public Explanation toExplanation(StreamFactory factory) throws IOException {
+    @Override
+    public Tuple read() throws IOException {
+        return this.sortStream.read();
+    }
 
-         return new StreamExplanation(getStreamNodeId().toString())
-                 .withChildren(new Explanation[]{stream.toExplanation(factory)})
-                 .withFunctionName(factory.getFunctionName(this.getClass()))
-                 .withImplementingClass(this.getClass().getName())
-                 .withExpressionType(ExpressionType.STREAM_DECORATOR)
-                 .withExpression(toExpression(factory, false).toString())
-                 .withHelpers(new Explanation[]{evaluator.toExplanation(factory)})
-                 .withHelper(comp.toExplanation(factory));
-     }
+    @Override
+    public StreamComparator getStreamSort() {
+        return this.sortStream.getStreamSort();
+    }
 
-     public void setStreamContext(StreamContext context) {
-         this.streamContext = context;
-         this.stream.setStreamContext(context);
-         this.evaluator.setStreamContext(context);
-     }
+    @Override
+    public StreamExpressionParameter toExpression(StreamFactory streamFactory) throws IOException {
+        return this.sortStream.toExpression(streamFactory);
+    }
 
-     public List<TupleStream> children() {
-         List<TupleStream> l = new ArrayList<TupleStream>();
-         l.add(stream);
-         return l;
-     }
-
-     public void open() throws IOException {
-         stream.open();
-     }
-
-     public void close() throws IOException {
-         stream.close();
-     }
-
-     public Tuple read() throws IOException {
-         while (true) {
-             Tuple tuple = stream.read();
-             if (tuple.EOF) {
-                 return tuple;
-             }
-
-             streamContext.getTupleContext().clear();
-             if ((boolean)evaluator.evaluate(tuple)) {
-                 return tuple;
-             }
-         }
-     }
-
-     public StreamComparator getStreamSort() {
-         return comp;
-     }
-
-     public int getCost() {
-         return 0;
-     }
- }
+    @Override
+    public Explanation toExplanation(StreamFactory streamFactory) throws IOException {
+        return this.sortStream.toExplanation(streamFactory);
+    }
+}
