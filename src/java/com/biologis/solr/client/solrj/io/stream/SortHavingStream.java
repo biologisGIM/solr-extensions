@@ -131,7 +131,7 @@ import org.apache.solr.client.solrj.io.stream.expr.*;
              expression.addParameter(
                      new StreamExpressionNamedParameter("by", ((Expressible) comparator).toExpression(factory)));
          } else {
-             throw new IOException("This SortStream contains a non-expressible equalitor - it cannot be converted to an expression");
+             throw new IOException("This SortHavingStream contains a non-expressible equalitor - it cannot be converted to an expression");
          }
 
          return expression;
