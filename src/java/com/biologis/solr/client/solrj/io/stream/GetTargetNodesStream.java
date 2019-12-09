@@ -1,5 +1,6 @@
 package com.biologis.solr.client.solrj.io.stream;
 
+import com.biologis.solr.client.solrj.io.util.UniqueWorker;
 import org.apache.solr.client.solrj.io.Tuple;
 import org.apache.solr.client.solrj.io.comp.FieldComparator;
 import org.apache.solr.client.solrj.io.comp.StreamComparator;
@@ -13,7 +14,7 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
 
     private TupleStream stream;
     private StreamComparator comparator;
-    private GetTargetNodesStream.Worker worker;
+    private UniqueWorker worker;
     private HashMap<String, String> options;
 
 
@@ -32,51 +33,12 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
         }
     }
 
-
-
     public void init(TupleStream stream, StreamFactory factory) throws IOException{
         this.stream = stream;
         this.comparator = factory.constructComparator("its_endpoint_id asc", FieldComparator.class);
         this.options = this.getSelectParameters();
 
-        worker = new GetTargetNodesStream.Worker() {
-
-            private LinkedList<Tuple> tuples = new LinkedList<Tuple>();
-            private Tuple eofTuple;
-
-            public void readStream(TupleStream stream) throws IOException {
-                HashSet<String> processedNodes = new HashSet<>();
-                Tuple tuple = stream.read();
-                String curNode;
-
-                while(!tuple.EOF){
-                    curNode = (String)tuple.get("node");
-
-                    if (!processedNodes.contains(curNode)){
-                        tuples.add(tuple);
-                        processedNodes.add(curNode);
-                    }
-
-                    tuple = stream.read();
-                }
-
-                eofTuple = tuple;
-            }
-
-            public void sort() {
-                tuples.sort(comparator);
-            }
-
-            public Tuple read() {
-                if(tuples.isEmpty()){
-                    return eofTuple;
-                }
-
-                return tuples.removeFirst();
-            }
-        };
-
-
+        this.worker = new UniqueWorker("node", this.comparator);
     }
 
     private HashMap<String, String> getSelectParameters(){
@@ -150,11 +112,4 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
         return this.stream.toExplanation(streamFactory);
     }
 
-    private interface Worker {
-        void readStream(TupleStream var1) throws IOException;
-
-        void sort();
-
-        Tuple read();
-    }
 }
