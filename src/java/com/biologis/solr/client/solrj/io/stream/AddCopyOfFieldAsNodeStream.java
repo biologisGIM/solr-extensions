@@ -25,7 +25,7 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
 
     public AddCopyOfFieldAsNodeStream(StreamExpression expression, StreamFactory factory) throws IOException {
         List<StreamExpression> streamExpressions = factory.getExpressionOperandsRepresentingTypes(expression, new Class[]{Expressible.class, TupleStream.class});
-
+        //TODO add checks
 
         this.init(factory.constructStream((StreamExpression)streamExpressions.get(0)), factory.getValueOperand(expression, 1));
     }
@@ -38,15 +38,6 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
         SelectStream resultStream = new SelectStream(this.stream, this.options);
         this.resultStream = resultStream;
     }
-
-    /*
-    concat(
-            fields="ss_endpoint_uuid",
-            delim=",
-            ",
-            as="node"
-          )
-     */
 
     private List<String> getSelectParameters(){
         List<String> params = new ArrayList<String>();
