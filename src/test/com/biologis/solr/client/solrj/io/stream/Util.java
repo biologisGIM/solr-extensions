@@ -17,13 +17,7 @@ public class Util {
 
 
     public List<Tuple> getTuples(String streamingExp) throws IOException {
-        ModifiableSolrParams params = new ModifiableSolrParams();
-        params.set("expr", streamingExp);
-        params.set("qt", "/stream");
-
-        TupleStream tupleStream = new SolrStream(this.url, params);
-        StreamContext context = new StreamContext();
-        tupleStream.setStreamContext(context);
+        TupleStream tupleStream = this.getTupleStream(streamingExp);
 
         // TODO sort the stream!
 
@@ -40,6 +34,18 @@ public class Util {
         tupleStream.close();
 
         return tupleList;
+    }
+
+    public TupleStream getTupleStream(String streamingExp) throws IOException {
+        ModifiableSolrParams params = new ModifiableSolrParams();
+        params.set("expr", streamingExp);
+        params.set("qt", "/stream");
+
+        TupleStream tupleStream = new SolrStream(this.url, params);
+        StreamContext context = new StreamContext();
+        tupleStream.setStreamContext(context);
+
+        return tupleStream;
     }
 
     public boolean areTuplesEqual(Tuple one, Tuple two){

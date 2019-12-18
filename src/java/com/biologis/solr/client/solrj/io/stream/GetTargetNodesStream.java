@@ -10,7 +10,7 @@ import org.apache.solr.client.solrj.io.stream.expr.*;
 import java.io.IOException;
 import java.util.*;
 
-public class GetTargetNodesStream extends TupleStream implements Expressible {
+public class GetTargetNodesStream extends CachedTupleStream implements Expressible {
 
     private TupleStream stream;
     private StreamComparator comparator;
@@ -37,7 +37,7 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
         this.stream = stream;
         this.comparator = factory.constructComparator("its_endpoint_id asc", FieldComparator.class);
         this.options = this.getSelectParameters();
-
+        this.factory = factory;
         this.worker = new UniqueWorker("node", this.comparator);
     }
 
@@ -57,6 +57,7 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
     @Override
     public void setStreamContext(StreamContext streamContext) {
         this.stream.setStreamContext(streamContext);
+        this.streamContext = streamContext;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
     }
 
     @Override
-    public void open() throws IOException {
+    protected void transform() throws IOException {
         this.stream.open();
 
         worker.readStream(stream);
@@ -78,7 +79,7 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
     }
 
     @Override
-    public Tuple read() throws IOException {
+    protected Tuple readNormal() throws IOException {
         Tuple original = this.worker.read();
 
         if(original.EOF){
@@ -94,7 +95,6 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
         }
 
         return result;
-
     }
 
     @Override
@@ -104,7 +104,15 @@ public class GetTargetNodesStream extends TupleStream implements Expressible {
 
     @Override
     public StreamExpressionParameter toExpression(StreamFactory streamFactory) throws IOException {
-        return null;
+        StreamExpression expression = new StreamExpression(factory.getFunctionName(this.getClass()));
+
+        if (stream instanceof Expressible) {
+            expression.addParameter(((Expressible) stream).toExpression(factory));
+        } else {
+            throw new IOException("The EvalStream contains a non-expressible TupleStream - it cannot be converted to an expression");
+        }
+
+        return expression;
     }
 
     @Override

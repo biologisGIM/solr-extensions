@@ -14,6 +14,7 @@ import org.apache.solr.client.solrj.request.UpdateRequest;
 import org.apache.solr.cloud.SolrCloudTestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -60,7 +61,7 @@ public class SearchAllTest extends SolrCloudTestCase {
                 .commit(cluster.getSolrClient(), COLLECTIONORALIAS);
     }
 
-    @Test
+    @Ignore
     public void testSearchAll() throws Exception {
 
         new UpdateRequest()

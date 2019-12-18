@@ -7,7 +7,6 @@ import org.apache.solr.client.solrj.io.Tuple;
 import org.apache.solr.client.solrj.io.comp.FieldComparator;
 import org.apache.solr.client.solrj.io.comp.StreamComparator;
 import org.apache.solr.client.solrj.io.eq.FieldEqualitor;
-import org.apache.solr.client.solrj.io.eq.StreamEqualitor;
 import org.apache.solr.client.solrj.io.stream.*;
 import org.apache.solr.client.solrj.io.stream.expr.*;
 
@@ -65,13 +64,10 @@ import java.util.Locale;
  *         'by="' . $this->_field('link_uuid') . ' ASC"'
  *       );
  */
-public class GetLinksOnRouteStream extends TupleStream implements Expressible {
+public class GetLinksOnRouteStream extends CachedTupleStream implements Expressible {
 
-    private TupleStream stream;
     private Worker worker;
-    private StreamFactory factory;
     private HashSet<String> options;
-    private StreamContext streamContext;
     private StreamComparator comparator;
 
     public GetLinksOnRouteStream(StreamExpression expression, StreamFactory factory) throws IOException {
@@ -116,8 +112,7 @@ public class GetLinksOnRouteStream extends TupleStream implements Expressible {
         return null;
     }
 
-    @Override
-    public void open() throws IOException{
+    protected void transform() throws IOException{
         this.stream.open();
 
         // cartesian product of stream
@@ -153,8 +148,7 @@ public class GetLinksOnRouteStream extends TupleStream implements Expressible {
         this.stream.close();
     }
 
-    @Override
-    public Tuple read() throws IOException {
+    public Tuple readNormal() throws IOException{
         Tuple original = this.worker.read();
 
         if(original.EOF){
@@ -179,7 +173,15 @@ public class GetLinksOnRouteStream extends TupleStream implements Expressible {
 
     @Override
     public StreamExpression toExpression(StreamFactory streamFactory) throws IOException {
-        return null;
+        StreamExpression expression = new StreamExpression(factory.getFunctionName(this.getClass()));
+
+        if (stream instanceof Expressible) {
+            expression.addParameter(((Expressible) stream).toExpression(factory));
+        } else {
+            throw new IOException("The EvalStream contains a non-expressible TupleStream - it cannot be converted to an expression");
+        }
+
+        return expression;
     }
 
     @Override

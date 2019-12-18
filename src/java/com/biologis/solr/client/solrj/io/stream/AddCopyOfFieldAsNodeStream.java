@@ -12,29 +12,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressible {
+public class AddCopyOfFieldAsNodeStream extends CachedTupleStream implements Expressible {
 
     private TupleStream stream;
     private TupleStream resultStream;
     private List<String> options;
     private ConcatOperation concat;
 
-    public AddCopyOfFieldAsNodeStream(TupleStream stream, String fieldName) throws IOException{
-        this.init(stream, fieldName);
-    }
-
     public AddCopyOfFieldAsNodeStream(StreamExpression expression, StreamFactory factory) throws IOException {
         List<StreamExpression> streamExpressions = factory.getExpressionOperandsRepresentingTypes(expression, new Class[]{Expressible.class, TupleStream.class});
         //TODO add checks
 
-        this.init(factory.constructStream((StreamExpression)streamExpressions.get(0)), factory.getValueOperand(expression, 1));
+        this.init(factory.constructStream((StreamExpression)streamExpressions.get(0)), factory.getValueOperand(expression, 1), factory);
     }
 
-    private void init(TupleStream stream, String fieldName) throws IOException{
+    private void init(TupleStream stream, String fieldName, StreamFactory factory) throws IOException{
         this.stream = stream;
         this.concat = new ConcatOperation(new String[]{fieldName}, "node", ",");
         this.options = this.getSelectParameters();
-
+        this.factory = factory;
         SelectStream resultStream = new SelectStream(this.stream, this.options);
         this.resultStream = resultStream;
     }
@@ -112,6 +108,7 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
     @Override
     public void setStreamContext(StreamContext streamContext) {
         this.resultStream.setStreamContext(streamContext);
+        this.streamContext = streamContext;
     }
 
     @Override
@@ -120,7 +117,7 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
     }
 
     @Override
-    public void open() throws IOException {
+    protected void transform() throws IOException {
         this.resultStream.open();
     }
 
@@ -130,7 +127,7 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
     }
 
     @Override
-    public Tuple read() throws IOException {
+    protected Tuple readNormal() throws IOException {
         Tuple readTuple = this.resultStream.read();
         concat.operate(readTuple);
         return readTuple;
@@ -143,7 +140,15 @@ public class AddCopyOfFieldAsNodeStream extends TupleStream implements Expressib
 
     @Override
     public StreamExpressionParameter toExpression(StreamFactory streamFactory) throws IOException {
-        return null;
+        StreamExpression expression = new StreamExpression(factory.getFunctionName(this.getClass()));
+
+        if (stream instanceof Expressible) {
+            expression.addParameter(((Expressible) stream).toExpression(factory));
+        } else {
+            throw new IOException("The EvalStream contains a non-expressible TupleStream - it cannot be converted to an expression");
+        }
+
+        return expression;
     }
 
     @Override

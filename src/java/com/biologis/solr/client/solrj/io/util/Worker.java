@@ -27,7 +27,7 @@ public class Worker {
             tuples.add(tuple);
             tuple = stream.read();
         }
-        var x = this.comparator.compare(tuple, tuple);
+
         this.eofTuple = tuple;
     }
 

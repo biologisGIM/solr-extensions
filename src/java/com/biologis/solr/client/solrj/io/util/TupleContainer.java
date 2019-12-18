@@ -20,12 +20,34 @@ public class TupleContainer extends TupleStream {
     private Tuple eofTuple;
     private StreamComparator comparator;
 
+    public TupleContainer(LinkedList<Tuple> tuples, Tuple eof){
+        this.tuples = tuples;
+        this.eofTuple = eof;
+    }
+
     public TupleContainer(LinkedList<Tuple> tuples){
         this.tuples = tuples;
+        this.eofTuple = tuples.removeLast();
+    }
+
+    public TupleContainer(TupleStream stream) throws IOException{
+        this.tuples = new LinkedList<>();
+        Tuple cur = stream.read();
+
+        while(!cur.EOF){
+            this.tuples.add(cur);
+            cur = stream.read();
+        }
+
+        this.eofTuple = cur;
+    }
+
+    public TupleContainer clone(){
+        return new TupleContainer((LinkedList<Tuple>)this.tuples.clone(), this.eofTuple.clone());
     }
 
     public TupleContainer(Worker worker){
-        this.tuples = new LinkedList<Tuple>();
+        this.tuples = new LinkedList<>();
         this.comparator = worker.comparator;
 
         Tuple t = worker.read();

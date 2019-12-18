@@ -1,5 +1,6 @@
 package com.biologis.solr.client.solrj.io.stream;
 
+import com.biologis.solr.client.solrj.io.util.Util;
 import org.apache.solr.client.solrj.io.Tuple;
 import org.apache.solr.client.solrj.io.comp.FieldComparator;
 import org.apache.solr.client.solrj.io.comp.MultipleFieldComparator;
@@ -31,7 +32,7 @@ intersect(
       'on=' . $solr_field
 );
  */
-public class IntersectSortStream extends TupleStream implements Expressible {
+public class IntersectSortStream extends CachedTupleStream implements Expressible {
 
     private TupleStream streamA;
     private TupleStream streamB;
@@ -75,6 +76,7 @@ public class IntersectSortStream extends TupleStream implements Expressible {
     public void setStreamContext(StreamContext streamContext) {
         this.streamA.setStreamContext(streamContext);
         this.streamB.setStreamContext(streamContext);
+        this.streamContext = streamContext;
     }
 
     @Override
@@ -83,7 +85,7 @@ public class IntersectSortStream extends TupleStream implements Expressible {
     }
 
     @Override
-    public void open() throws IOException {
+    protected void transform() throws IOException {
         //Sort A
         this.sortStreamA = new SortStream(this.streamA, this.cp);
         this.sortStreamA.open();
@@ -92,25 +94,9 @@ public class IntersectSortStream extends TupleStream implements Expressible {
         this.sortStreamB.open();
 
         // Intersect sorted A with sorted B
-        IntersectStream intersectStream = new IntersectStream(this.sortStreamA, this.sortStreamB, this.convertToEqualitor(cp));
+        IntersectStream intersectStream = new IntersectStream(this.sortStreamA, this.sortStreamB, Util.convertToEqualitor(cp));
         this.intersectStream = intersectStream;
         this.intersectStream.open();
-    }
-
-    private StreamEqualitor convertToEqualitor(StreamComparator comp) {
-        if (!(comp instanceof MultipleFieldComparator)) {
-            FieldComparator fComp = (FieldComparator)comp;
-            return new FieldEqualitor(fComp.getLeftFieldName(), fComp.getRightFieldName());
-        } else {
-            MultipleFieldComparator mComp = (MultipleFieldComparator)comp;
-            StreamEqualitor[] eqs = new StreamEqualitor[mComp.getComps().length];
-
-            for(int idx = 0; idx < mComp.getComps().length; ++idx) {
-                eqs[idx] = this.convertToEqualitor(mComp.getComps()[idx]);
-            }
-
-            return new MultipleFieldEqualitor(eqs);
-        }
     }
 
     @Override
@@ -121,7 +107,7 @@ public class IntersectSortStream extends TupleStream implements Expressible {
     }
 
     @Override
-    public Tuple read() throws IOException {
+    protected Tuple readNormal() throws IOException {
         return this.intersectStream.read();
     }
 
