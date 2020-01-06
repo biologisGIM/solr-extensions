@@ -40,6 +40,8 @@ public class FieldListEvaluator extends RecursiveObjectEvaluator implements Many
             String str = ob.toString();
             if (str.startsWith("\"") && str.endsWith("\"")) {
                 str = str.substring(1, str.length() -1);
+            } else if (str == null || str.isEmpty() || str.equals("")) {        //TODO: must be edited to append the "und" string if isEmpty
+                str = "und";
             }
             sb.append(str.toString());
         }
